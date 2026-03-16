@@ -13,26 +13,30 @@ The project shows how changes committed to a Git repository automatically deploy
 
 # Architecture
 Developer (RHEL VM)
-        │
-        │ git push
-        ▼
+        |
+        | git push
+        v
 GitHub Repository
-        │
-        ▼
-ArgoCD (GitOps Controller)
-        │
-        ▼
-Kubernetes Cluster (K3s on EC2)
-        │
-        ▼
-Application Pods (nginx)
-        │
-        ▼
-NodePort Service
-        │
-        ▼
+        |
+        | watched by
+        v
+ArgoCD GitOps Controller
+        |
+        | applies manifests
+        v
+Kubernetes Cluster (K3s on AWS EC2)
+        |
+        | creates
+        v
+Pods (nginx containers)
+        |
+        | exposed via
+        v
+Kubernetes Service (NodePort 30080)
+        |
+        v
 Browser Access
-
+http://3.110.184.69:30080
 
 # Technologies Used
 
@@ -131,14 +135,16 @@ http://<EC2-IP>:30080
 
 
 # GitOps Workflow
-
-The deployment follows the GitOps model.
-
-1. Developer modifies Kubernetes YAML files.
-2. Changes are committed and pushed to GitHub.
-3. ArgoCD monitors the repository.
-4. ArgoCD automatically syncs changes to Kubernetes.
-5. Kubernetes updates the running application.
+Edit YAML  →  Commit  →  Push to GitHub
+      |            |            |
+      v            v            v
+Developer      GitHub Repo     ArgoCD detects change
+                                      |
+                                      v
+                           Kubernetes cluster updated
+                                      |
+                                      v
+                              Application deployed
 
 Example:
 replicas: 1 → replicas: 3
