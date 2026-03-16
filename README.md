@@ -11,32 +11,34 @@ This project demonstrates a **GitOps-based Kubernetes deployment pipeline** usin
 
 The project shows how changes committed to a Git repository automatically deploy and update applications in Kubernetes.
 
+---
+
 # Architecture
+
+```
 Developer (RHEL VM)
-        |
-        | git push
-        v
+        │
+        │ git push
+        ▼
 GitHub Repository
-        |
-        | watched by
-        v
-ArgoCD GitOps Controller
-        |
-        | applies manifests
-        v
-Kubernetes Cluster (K3s on AWS EC2)
-        |
-        | creates
-        v
-Pods (nginx containers)
-        |
-        | exposed via
-        v
-Kubernetes Service (NodePort 30080)
-        |
-        v
+        │
+        ▼
+ArgoCD (GitOps Controller)
+        │
+        ▼
+Kubernetes Cluster (K3s on EC2)
+        │
+        ▼
+Application Pods (nginx)
+        │
+        ▼
+NodePort Service
+        │
+        ▼
 Browser Access
-http://3.110.184.69:30080
+```
+
+---
 
 # Technologies Used
 
@@ -49,54 +51,91 @@ http://3.110.184.69:30080
 | AWS EC2           | Infrastructure hosting the cluster |
 | Nginx             | Example application                |
 
+---
+
 # Infrastructure Setup
 
 ## EC2 Instance
-Instance type used: t3.small
-Operating system: Amazon Linux
+
+Instance type used:
+
+```
+t3.small
+```
+
+Operating system:
+
+```
+Amazon Linux
+```
 
 The Kubernetes cluster runs directly on this EC2 instance.
 
+---
+
 # Kubernetes Cluster Setup
+
 K3s was installed to create a lightweight Kubernetes cluster.
 
 Install command:
- in bash
+
+```bash
 curl -sfL https://get.k3s.io | sh -
+```
 
 Verify installation:
- in bash
+
+```bash
 kubectl get nodes
+```
 
 Example output:
+
+```
 NAME               STATUS   ROLES
 ip-172-31-45-20    Ready    control-plane
+```
 
+---
 
 # ArgoCD Installation
 
 A dedicated namespace was created for ArgoCD:
- in bash
+
+```bash
 kubectl create namespace argocd
+```
 
 ArgoCD installation:
- in bash
+
+```bash
 kubectl apply -n argocd \
 -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
 
 Check pods:
- in bash
+
+```bash
 kubectl get pods -n argocd
+```
 
 Access ArgoCD dashboard using port-forward:
- in bash
+
+```bash
 kubectl port-forward svc/argocd-server -n argocd 8080:443
+```
 
 ArgoCD UI:
-https://<EC2-IP>:8080
 
+```
+https://<EC2-IP>:8080
+```
+
+---
 
 # Git Repository Structure
+
+```
 Kube-GitOps
 │
 ├── app
@@ -107,70 +146,111 @@ Kube-GitOps
 ├── argocd
 │
 └── k8s
+```
+
+---
 
 # Kubernetes Deployment
 
 The application is deployed using a Kubernetes Deployment.
+
 File:
+
+```
 app/nginx/deployment.yaml
+```
 
 Key configuration:
+
+```
 replicas: 3
 image: nginx
 containerPort: 80
+```
+
+---
 
 # Kubernetes Service
 
 To expose the application externally, a NodePort service is used.
+
 File:
+
+```
 app/nginx/service.yaml
+```
 
 Configuration:
+
+```
 type: NodePort
 nodePort: 30080
+```
 
 This exposes the application on:
 
+```
 http://<EC2-IP>:30080
+```
 
+---
 
 # GitOps Workflow
-Edit YAML  →  Commit  →  Push to GitHub
-      |            |            |
-      v            v            v
-Developer      GitHub Repo     ArgoCD detects change
-                                      |
-                                      v
-                           Kubernetes cluster updated
-                                      |
-                                      v
-                              Application deployed
+
+The deployment follows the GitOps model.
+
+1. Developer modifies Kubernetes YAML files.
+2. Changes are committed and pushed to GitHub.
+3. ArgoCD monitors the repository.
+4. ArgoCD automatically syncs changes to Kubernetes.
+5. Kubernetes updates the running application.
 
 Example:
+
+```
 replicas: 1 → replicas: 3
+```
 
 After pushing the change:
+
+```
 git commit
 git push
+```
 
 ArgoCD automatically scaled the application.
+
+---
 
 # Verification
 
 Check running pods:
-in bash
+
+```bash
 kubectl get pods
+```
 
 Example output:
+
+```
 nginx-xxxx Running
 nginx-xxxx Running
 nginx-xxxx Running
+```
 
 Access the application:
+
+```
 http://<EC2-IP>:30080
+```
 
 Expected result:
+
+```
 Welcome to nginx!
+```
+
+---
 
 # Project Highlights
 
@@ -179,6 +259,8 @@ Welcome to nginx!
 ✔ Infrastructure running on AWS EC2
 ✔ Lightweight Kubernetes using K3s
 ✔ Application exposed using Kubernetes Service
+
+---
 
 # Future Improvements
 
@@ -190,12 +272,14 @@ Possible improvements:
 * Implement CI/CD pipelines
 * Deploy monitoring stack (Prometheus + Grafana)
 
+---
+
 # Learning Outcomes
 
 This project demonstrates practical experience with:
+
 * Kubernetes fundamentals
 * GitOps workflows
 * ArgoCD deployment automation
 * Kubernetes services and networking
 * Cloud infrastructure setup
-
